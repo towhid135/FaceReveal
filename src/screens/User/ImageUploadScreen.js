@@ -1,4 +1,11 @@
-import {StyleSheet, Text, View, Image, ScrollView} from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  ScrollView,
+  Platform,
+} from 'react-native';
 import React, {useState} from 'react';
 import Color from '@constant/Color';
 import Rp from '@constant/Rp';
@@ -6,6 +13,8 @@ import CustomButton from '@components/CustomButton';
 import ImageCard from '@components/ImageCard';
 import SubImageLoaderComp from '@components/SubImageLoaderComp';
 import CameraAndGallerySelectionModal from '@components/CameraAndGallerySelectionModal';
+import {checkStorageWritePermission} from '../../constant/permission/permission';
+import downloadImage from '../../utils/downloadImage';
 
 const ImageSize = Rp(700);
 const parentImageSize = Rp(550);
@@ -36,11 +45,25 @@ const ImageUploadScreen = () => {
     setState(prev => ({...prev, isCustomModalOpen: !prev.isCustomModalOpen}));
   };
   const getCameraAndGalleryImageUrl = ImageUrl => {
+    console.log('camera url: ', ImageUrl);
     setState(prev => ({...prev, ImageUrl}));
     toggleCustomModal();
   };
   const uploadPressHandler = ImageUrl => {
     toggleCustomModal();
+  };
+
+  const downloadPressHandler = async () => {
+    const dummyImageUrl =
+      'https://raw.githubusercontent.com/AboutReact/sampleresource/master/gift.png';
+    if (Platform.OS === 'ios' && dummyImageUrl)
+      await downloadImage(dummyImageUrl);
+    else if (Platform.OS === 'android' && dummyImageUrl) {
+      const hasPermission = await checkStorageWritePermission();
+      if (hasPermission) {
+        await downloadImage(dummyImageUrl);
+      }
+    }
   };
   const firstBtnName = state.ImageUrl ? 'Recover' : 'Upload';
   return (
@@ -83,6 +106,7 @@ const ImageUploadScreen = () => {
           />
           <CustomButton
             btnName="Download"
+            onPressHandler={downloadPressHandler}
             buttonStyle={{
               backgroundColor: Color.dark.primaryContent,
               width: Rp(500),

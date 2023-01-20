@@ -5,7 +5,9 @@ import {
   Dimensions,
   Platform,
   TouchableOpacity,
+  PermissionsAndroid,
   View,
+  Alert,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Color from '../constant/Color';
@@ -16,6 +18,7 @@ import BlurBodyComp from './BlurBodyComp';
 import TouchAbleTextComp from './TouchAbleTextComp';
 
 import ImagePicker from 'react-native-image-crop-picker';
+import DocumentScanner from 'react-native-document-scanner-plugin';
 
 const {width} = Dimensions.get('window');
 
@@ -26,27 +29,31 @@ const CameraAndGallerySelectionModal = props => {
   //console.log('inside custom modal', cWidth, cHeight, gWidth, gHeight);
 
   const CapturePhoto = async () => {
-    //const {status} = await ImagePicker.requestCameraPermissionsAsync();
-    //new code starts
-    ImagePicker.openCamera({
-      width: cWidth,
-      height: cHeight,
-      cropping: true,
-      // compressImageMaxWidth: 450,
-      // compressImageMaxHeight: 350,
-      compressImageQuality: 1.0,
-      includeExif: true,
-      cropperStatusBarColor: 'white',
-      cropperToolbarColor: 'white',
-      cropperActiveWidgetColor: 'white',
-      cropperToolbarWidgetColor: '#3498DB',
-    })
-      .then(image => {
-        props.onImageTake(image.path);
-      })
-      .catch(err => {
-        console.log('camera open error', err);
-      });
+    // prompt user to accept camera permission request if they haven't already
+    if (
+      Platform.OS === 'android' &&
+      (await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+      )) !== PermissionsAndroid.RESULTS.GRANTED
+    ) {
+      Alert.alert(
+        'Error',
+        'User must grant camera permissions to use document scanner.',
+      );
+      return;
+    }
+
+    // start the document scanner
+    const {scannedImages} = await DocumentScanner.scanDocument({
+      maxNumDocuments: 1,
+    });
+
+    // get back an array with scanned image file paths
+    if (scannedImages.length > 0) {
+      // set the img src, so we can view the first scanned image
+      // setScannedImage(scannedImages[0]);
+      props.onImageTake(scannedImages[0]);
+    }
   };
 
   const GalleryImage = async () => {
