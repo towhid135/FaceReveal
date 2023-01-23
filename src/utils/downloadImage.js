@@ -22,7 +22,7 @@ export default downloadImage = filePath => {
   //get image extension
   const extension = getFileExtension(filePath);
   //create random name for image
-  const imageName = createImageName(extension);
+  const imageName = createImageName(extension[0]);
   const downloadPath = PictureDir + imageName;
 
   config({
